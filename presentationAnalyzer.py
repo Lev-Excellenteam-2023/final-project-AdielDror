@@ -51,9 +51,10 @@ class PresentationAnalyzer:
         openai_api = OpenAIAPI(self.api_key)
 
         storage_list = []
-        tasks = []
-        for slide_text in slides:
-            tasks.append(self.analyze_slide(openai_api, slide_text))
+        # tasks = []
+        # for slide_text in slides:
+        #     tasks.append(self.analyze_slide(openai_api, slide_text))
+        tasks = [self.analyze_slide(openai_api, slide_text) for slide_text in slides]
         slide_response = await asyncio.gather(*tasks)
 
         for response in slide_response:

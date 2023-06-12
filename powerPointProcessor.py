@@ -38,7 +38,7 @@ class PowerPointProcessor:
             if hasattr(shape, 'text'):
                 string_of_slide += shape.text
                 string_of_slide += " "
-        return string_of_slide
+        return string_of_slide.strip()
 
     def process_slides(self):
         """
