@@ -56,11 +56,11 @@ class PresentationAnalyzer:
 
         for response in slide_response:
             if response is not None:
-                storage_list.append(response)
+                storage_list.append(f'ChatGPT: {response}')
                 print(f'ChatGPT: {response}')
             else:
                 print("Slide analysis skipped.")
 
         # Write the JSON string to a file
-        with open(self.file_name + '.json', 'w') as file:
+        with open('outputs/' + str(self.file_name.name) + '.json', 'w') as file:
             json.dump(storage_list, file, indent=4)

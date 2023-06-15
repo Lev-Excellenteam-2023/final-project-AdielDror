@@ -21,7 +21,7 @@ class PowerPointProcessor:
         """
         Loads the PowerPoint presentation using the pptx library.
         """
-        self.all_slides = pptx.Presentation(self.file_name + '.pptx')
+        self.all_slides = pptx.Presentation(str(self.file_name))
 
     def extract_slide_text(self, slide):
         """
