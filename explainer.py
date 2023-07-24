@@ -48,7 +48,7 @@ async def process_file(session, upload_id, file_name):
     print(f"Explanation saved for file: {file_name}")
 
     # Remove the processed file from the uploads folder
-    file_name.unlink()
+    os.unlink(file_name)
 
 
 async def process_new_files():
@@ -71,10 +71,10 @@ async def process_new_files():
     pending_uploads = session.query(Upload).filter_by(status='pending').all()
 
     for upload in pending_uploads:
-        file_name = app.config['UPLOAD_FOLDER'] / upload.uid
+        file_name = upload.filename + "_" + str(upload.upload_time.strftime('%Y%m%d%H%M%S')) + "_" + upload.uid
+        file_name = app.config['UPLOAD_FOLDER'] / file_name
 
-        # for file_name in uploaded_files:
-        output_filename = f"output_{upload.uid}.json"
+        output_filename = f"{upload.uid}.json"
         output_path = app.config['OUTPUT_FOLDER'] / output_filename
 
         if not output_path.exists():
@@ -98,3 +98,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+

@@ -62,5 +62,5 @@ class PresentationAnalyzer:
                 print("Slide analysis skipped.")
 
         # Write the JSON string to a file
-        with open('outputs/' + str(self.file_name.name) + '.json', 'w') as file:
+        with open('outputs/' + str(self.file_name.name.split("_")[-1]) + '.json', 'w') as file:
             json.dump(storage_list, file, indent=4)

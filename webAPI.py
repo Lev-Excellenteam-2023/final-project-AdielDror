@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from pathlib import Path
 import datetime
 import uuid
-
+from email_validator import validate_email, EmailNotValidError
+from sqlalchemy import desc
 from werkzeug.utils import secure_filename
 
 from db.database import Session
@@ -50,23 +51,31 @@ class WebAPI:
         session = Session()
 
         user = None
-        if email:
+        try:
+            if email:
+                valid_email = validate_email(email)
+                email = valid_email.email
+
             user = session.query(User).filter_by(email=email).first()
             if not user:
                 user = User(email=email)
                 session.add(user)
 
-        upload = Upload(
-            uid=uid,
-            filename=filename,
-            upload_time=datetime.datetime.now(),
-            status='pending',
-            user=user
-        )
-        session.add(upload)
-        session.commit()
+            upload = Upload(
+                uid=uid,
+                filename=filename,
+                upload_time=datetime.datetime.now(),
+                finish_time=None,
+                status='pending',
+                user=user
+            )
+            session.add(upload)
+            session.commit()
 
-        session.close()
+            session.close()
+
+        except EmailNotValidError as e:
+            return jsonify({'error': str(e)})
 
         return jsonify({'uid': uid})
 
@@ -102,7 +111,6 @@ class WebAPI:
                         'timestamp': None,
                         'explanation': None
                     }
-                    :param uid_or_filename:
 
         """
         session = Session()
@@ -123,13 +131,6 @@ class WebAPI:
         if not upload:
             session.close()  # Close the session before returning the response
             return jsonify({'status': 'not found', 'filename': None, 'timestamp': None, 'explanation': None})
-        # upload_files = app.config['UPLOAD_FOLDER'].glob('*')
-
-        # for path in upload_files:
-        #     if uid_or_filename in path.name:
-        #         original_filename, timestamp, _ = path.name.rsplit('_', 2)
-        #         output_file = f"output_{original_filename}_{timestamp}_{uid_or_filename}"
-        #         if (app.config['UPLOAD_FOLDER'] / output_file).exists():
 
         filename = upload.filename
         timestamp = upload.upload_time.strftime('%Y%m%d%H%M%S')
@@ -153,7 +154,54 @@ class WebAPI:
         session.close()  # Close the session before returning the response
         return response
 
-        # return jsonify({'status': 'not found', 'filename': None, 'timestamp': None, 'explanation': None})
+    @staticmethod
+    @app.route('/history', methods=['GET'])
+    def history():
+        """
+        Retrieves a JSON summary of past uploads for a user based on their email.
+
+        The email is provided as a URL parameter.
+
+        Returns:
+            jsonify: A JSON response containing a list of upload summaries.
+
+        """
+        email = request.args.get('email')
+
+        if not email:
+            return jsonify({'error:' 'Email parameter is missing'}), 400
+
+        try:
+            valid_email = validate_email(email)
+            email = valid_email.ascii_email
+        except EmailNotValidError as e:
+            return jsonify({'error': str(e)}), 400
+
+        session = Session()
+
+        user = session.query(User).filter_by(email=email).first()
+
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        uploads = (
+            session.query(Upload)
+                .filter_by(user=user)
+                .order_by(desc(Upload.upload_time))
+                .all()
+        )
+
+        upload_summaries = []
+        for upload in uploads:
+            summary = {
+                'uid': upload.uid,
+                'filename': upload.filename,
+                'upload_time': upload.upload_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'status': upload.status
+            }
+            upload_summaries.append(summary)
+
+        return jsonify(upload_summaries)
 
 
 if __name__ == '__main__':
