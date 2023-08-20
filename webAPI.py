@@ -16,6 +16,17 @@ class WebAPI:
     @staticmethod
     @app.route('/upload', methods=['POST'])
     def upload():
+        """
+        Handles the file upload request.
+
+        This method expects a file to be attached to the request with the key 'file'.
+        It saves the uploaded file to the specified upload folder, generating a unique filename
+        based on the original filename, timestamp, and a UUID.
+
+        Returns:
+            jsonify: A JSON response containing the unique identifier (UID) of the uploaded file.
+
+        """
         if 'file' not in request.files:
             return jsonify({'error': 'No file attached'})
 
@@ -34,6 +45,37 @@ class WebAPI:
     @staticmethod
     @app.route('/status/<uid>', methods=['GET'])
     def status(uid):
+        """
+        Retrieves the status of a file upload based on its unique identifier (UID).
+
+        Args:
+            uid (str): The unique identifier (UID) of the uploaded file.
+
+        Returns:
+            jsonify: A JSON response containing the status information of the file upload.
+                - If the processed output file exists, returns:
+                    {
+                        'status': 'done',
+                        'filename': original_filename,
+                        'timestamp': timestamp,
+                        'explanation': 'Processed output for the upload'
+                    }
+                - If the processed output file does not exist, returns:
+                    {
+                        'status': 'pending',
+                        'filename': original_filename,
+                        'timestamp': timestamp,
+                        'explanation': None
+                    }
+                - If the file with the specified UID is not found, returns:
+                    {
+                        'status': 'not found',
+                        'filename': None,
+                        'timestamp': None,
+                        'explanation': None
+                    }
+
+        """
         upload_files = app.config['UPLOAD_FOLDER'].glob('*')
 
         for path in upload_files:
